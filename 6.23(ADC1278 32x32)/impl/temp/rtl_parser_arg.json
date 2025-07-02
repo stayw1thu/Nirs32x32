@@ -1,0 +1,89 @@
+{
+ "Device" : "GW2A-55C",
+ "Files" : [
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/74hc165.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/NearInfrared.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ad1278_fifo/ad1278_fifo.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ad9833.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ads1278_clk/ads1278_clk.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ads1278_driver_1.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ads1278_driver_2.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ads1278_driver_3.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ads1278_driver_4.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/fifo_recv/fifo_recv.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/fifo_send/fifo_send.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ft232hq_recv.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/ft232hq_send.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/hc595d_drive.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/hc595pw_drive.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/recv_cmd_para.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/recv_data_analys.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/send_data_analys.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/src/trigger_out_module.v",
+   "Type" : "verilog"
+  }
+ ],
+ "IncludePath" : [
+
+ ],
+ "LoopLimit" : 2000,
+ "ResultFile" : "D:/WTY/wtyang/NearInfrared/gaoyun/test/6.23(ADC1278 32x32)/impl/temp/rtl_parser.result",
+ "Top" : "NearInfrared",
+ "VerilogStd" : "verilog_2001",
+ "VhdlStd" : "vhdl_93"
+}

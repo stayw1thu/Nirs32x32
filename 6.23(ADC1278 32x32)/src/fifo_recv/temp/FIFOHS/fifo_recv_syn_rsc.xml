@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module name="ft232hq_recv_fifo" Register="84" Alu="29" Lut="82" Bsram="1" Ssram="6" T_Register="84(84)" T_Alu="29(29)" T_Lut="82(82)" T_Bsram="1(1)" T_Ssram="6(6)"/>

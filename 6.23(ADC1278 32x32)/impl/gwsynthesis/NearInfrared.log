@@ -1,0 +1,84 @@
+GowinSynthesis start
+Running parser ...
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\74hc165.v'
+Undeclared symbol 'rising_edgeof_shiftclk', assumed default net type 'wire'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\74hc165.v":44)
+Undeclared symbol 'falling_edgeof_shiftclk', assumed default net type 'wire'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\74hc165.v":45)
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\NearInfrared.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ad1278_fifo\ad1278_fifo.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ad9833.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_clk\ads1278_clk.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_driver_1.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_driver_2.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_driver_3.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_driver_4.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\fifo_recv\fifo_recv.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\fifo_send\fifo_send.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ft232hq_recv.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ft232hq_send.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\hc595d_drive.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\hc595pw_drive.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\recv_cmd_para.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\recv_data_analys.v'
+Analyzing included file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\recv_cmd_para.v'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\recv_data_analys.v":31)
+Back to file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\recv_data_analys.v'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\recv_data_analys.v":31)
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v'
+Analyzing Verilog file 'D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\trigger_out_module.v'
+Undeclared symbol 'o_tri_out_finish', assumed default net type 'wire'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\trigger_out_module.v":42)
+Compiling module 'NearInfrared'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\NearInfrared.v":1)
+Compiling module 'hc165_drive'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\74hc165.v":1)
+Compiling module 'trigger_out_module'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\trigger_out_module.v":1)
+Compiling module 'hc595pw_drive'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\hc595pw_drive.v":1)
+WARN  (EX3670) : Actual bit length 8 differs from formal bit length 24 for port 'hc595d_data'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\trigger_out_module.v":34)
+WARN  (EX3670) : Actual bit length 4 differs from formal bit length 8 for port 'hc595d_data_len'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\trigger_out_module.v":35)
+WARN  (EX3073) : Port 'Wnum' remains unconnected for this instance("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\recv_data_analys.v":322)
+Compiling module 'recv_data_analys'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\recv_data_analys.v":1)
+Compiling module 'ft232hq_recv'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ft232hq_recv.v":9)
+Compiling module 'ft232hq_recv_fifo'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\fifo_recv\fifo_recv.v":598)
+Compiling module '**'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\fifo_recv\fifo_recv.v":597)
+WARN  (EX3073) : Port 'Full' remains unconnected for this instance("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":2035)
+Compiling module 'send_data_analys'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":1)
+Extracting RAM for identifier 'send_pkg'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":211)
+Extracting RAM for identifier 'high_temp'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":229)
+Extracting RAM for identifier 'low_temp'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":230)
+Extracting RAM for identifier 'adjust_cnt'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":231)
+WARN  (EX3791) : Expression size 20 truncated to fit in target size 16("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":394)
+WARN  (EX3791) : Expression size 17 truncated to fit in target size 16("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":395)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":752)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":753)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":754)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":808)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":809)
+WARN  (EX3791) : Expression size 9 truncated to fit in target size 8("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":810)
+Compiling module 'ft232hq_send'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ft232hq_send.v":1)
+Compiling module 'ft232hq_send_fifo'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\fifo_send\fifo_send.v":799)
+Compiling module '**'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\fifo_send\fifo_send.v":798)
+Compiling module 'ads1278_drive_1'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_driver_1.v":1)
+Compiling module 'ads1278_clk'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_clk\ads1278_clk.v":10)
+Compiling module 'ad1278_fifo'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ad1278_fifo\ad1278_fifo.v":298)
+Compiling module '**'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ad1278_fifo\ad1278_fifo.v":297)
+Compiling module 'ads1278_drive_2'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_driver_2.v":1)
+Compiling module 'ads1278_drive_3'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_driver_3.v":1)
+Compiling module 'ads1278_drive_4'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ads1278_driver_4.v":1)
+Compiling module 'hc595d_drive'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\hc595d_drive.v":1)
+WARN  (EX3670) : Actual bit length 16 differs from formal bit length 24 for port 'hc595d_data'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\send_data_analys.v":2162)
+Compiling module 'ad9833'("D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\ad9833.v":1)
+NOTE  (EX0101) : Current top module is "NearInfrared"
+[5%] Running netlist conversion ...
+Running device independent optimization ...
+[10%] Optimizing Phase 0 completed
+[15%] Optimizing Phase 1 completed
+[25%] Optimizing Phase 2 completed
+Running inference ...
+[30%] Inferring Phase 0 completed
+[40%] Inferring Phase 1 completed
+[50%] Inferring Phase 2 completed
+[55%] Inferring Phase 3 completed
+Running technical mapping ...
+[60%] Tech-Mapping Phase 0 completed
+[65%] Tech-Mapping Phase 1 completed
+[75%] Tech-Mapping Phase 2 completed
+[80%] Tech-Mapping Phase 3 completed
+[90%] Tech-Mapping Phase 4 completed
+[95%] Generate netlist file "D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\impl\gwsynthesis\NearInfrared.vg" completed
+[100%] Generate report file "D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\impl\gwsynthesis\NearInfrared_syn.rpt.html" completed
+GowinSynthesis finish

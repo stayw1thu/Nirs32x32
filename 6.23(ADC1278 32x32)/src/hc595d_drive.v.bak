@@ -1,0 +1,133 @@
+module hc595d_drive(
+	input 						clk,
+	input							rst_n,
+	
+	input 			[127:0]	hc595d_data,
+	input				[7:0]		hc595d_data_len,//写入的位数
+	input		wire				hc595d_wr_en,
+	
+	output 	reg 				hc595d_rck,
+	output 	wire				hc595d_scl,
+	output 	reg				hc595d_sck,
+	output 	reg 				hc595d_ser,
+	output  	reg				hc595d_wr_finish
+);
+
+reg [127:0]	wr_data;			//待写入的数据
+reg [7:0]	wr_data_len;		//待写入数据的字节长度
+reg			wr_data_flag;		//开始写入数据标志
+reg [2:0]	wr_bitdata_cnt;		//计数写入数据的字节数
+reg [7:0]	wr_bytedata_cnt;	//计数写入数据的位数
+reg	[3:0]	wr_state;			//写入数据的状态
+reg [7:0]	byte_num;
+
+//上升沿接口
+wire       en_flag;
+reg        en_d0; 
+reg        en_d1; 
+
+/**************************************
+			main code
+**************************************/ 
+//hc595d_scl拉高，不复位移位寄存器
+assign hc595d_scl = 1;
+//捕获hc595d_wr_en上升沿，可以写入数据
+assign en_flag = (~en_d1) & en_d0;
+
+
+
+                                                
+//对写使能信号hc595d_wr_en延迟两个时钟周期
+always @(posedge clk or negedge rst_n) begin         
+    if (!rst_n) begin
+        en_d0 <= 1'b0;                                  
+        en_d1 <= 1'b0;
+    end                                                      
+    else begin                                               
+        en_d0 <= hc595d_wr_en;                               
+        en_d1 <= en_d0;                            
+    end
+end
+
+//接收数据
+always @(posedge clk or negedge rst_n) begin
+	if(!rst_n) begin
+		wr_data <= 128'd0;
+		wr_data_len <= 7'd0;
+		wr_data_flag <= 0;
+		hc595d_wr_finish <= 1'd1;
+	end
+	else begin
+		if(en_flag) begin //接收数据，开始写入数据标志位置1
+			wr_data <= hc595d_data;
+			wr_data_len <= hc595d_data_len ;
+			wr_data_flag <= 1;
+			hc595d_wr_finish <= 1'd0;
+		end
+		else if(wr_bytedata_cnt == wr_data_len) begin
+			wr_data_flag <= 0;
+			hc595d_wr_finish <= 1'd1;
+		end
+		else begin
+			wr_data_flag <= wr_data_flag;
+		end
+	end			
+end
+
+//写入wr_data_len个字节的数据
+always @(posedge clk or negedge rst_n) begin
+	if(!rst_n) begin
+		wr_bytedata_cnt <= 7'd0;
+		wr_state <= 0;
+		hc595d_rck <= 0;
+		hc595d_sck <= 1'd0;
+		hc595d_ser <= 0;
+	end
+	else begin
+		if(wr_data_flag)begin
+			case(wr_state)
+				4'd0:begin
+					hc595d_rck <= 1'd0;
+					hc595d_sck <= 1'd0;
+					wr_state <= 4'd1;
+				end
+				4'd1:begin
+					hc595d_ser <= wr_data[wr_data_len - 1 - wr_bytedata_cnt];
+					wr_state <= 4'd2;
+				end
+				4'd2:begin
+					hc595d_sck <= 1'd1;
+					wr_bytedata_cnt <= wr_bytedata_cnt + 1;
+					wr_state <= 4'd3;
+				end
+				4'd3:begin
+					wr_state <= 4'd0;
+					if(wr_bytedata_cnt == wr_data_len)begin
+						wr_bytedata_cnt = 7'd0;
+						hc595d_rck <= 1'd1;
+					end
+					else begin
+						
+					end
+				end
+				default:begin
+					;
+				end
+			endcase
+		end
+		else begin
+			wr_bytedata_cnt <= 4'd0;
+			wr_state <= 0;
+			hc595d_rck <= 0;
+			hc595d_sck <= 1'd0;
+			hc595d_ser <= 0;
+		end
+	end			
+end
+
+
+
+
+
+endmodule
+

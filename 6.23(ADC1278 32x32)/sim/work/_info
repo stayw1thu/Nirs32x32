@@ -1,0 +1,261 @@
+m255
+K4
+z2
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dD:/modeltech64_10.4/gowin_lib/gw2a
+T_opt
+!s110 1720764342
+VeiZnH@`JO4<TU4Dzaa@bc0
+04 12 4 work NearInfrared fast 0
+=1-0068ebaf0d96-6690c7b5-b3-6710
+o-quiet -auto_acc_if_foreign -work work -L D:/modeltech64_10.4/gowin_lib/gw2a/prim_sim
+n@_opt
+OL;O;10.4;61
+R0
+vad9833
+Z1 !s110 1720765114
+!i10b 1
+!s100 lQ`VPZeXbf:i=;8_:oA;d3
+I4_OXb;G^d1Go6Q7]LSRn20
+Z2 VDg1SIo80bB@j0V0VzS_@n1
+Z3 dE:/wtyang/gaoyun/test/1x1/sim
+w1719472450
+8E:/wtyang/gaoyun/test/1x1/src/ad9833.v
+FE:/wtyang/gaoyun/test/1x1/src/ad9833.v
+L0 1
+Z4 OL;L;10.4;61
+r1
+!s85 0
+31
+!s108 1720765114.308000
+!s107 E:/wtyang/gaoyun/test/1x1/src/ad9833.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/ad9833.v|
+!i113 0
+Z5 o-work work -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+vads8406
+R1
+!i10b 1
+!s100 ;OZeaDa_H_XoFj<a[YDdT1
+I;^zdF:_`X:<;8Z5H4zLhV1
+R2
+R3
+w1719458046
+8E:/wtyang/gaoyun/test/1x1/src/ads8406.v
+FE:/wtyang/gaoyun/test/1x1/src/ads8406.v
+L0 1
+R4
+r1
+!s85 0
+31
+!s108 1720765114.625000
+!s107 E:/wtyang/gaoyun/test/1x1/src/ads8406.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/ads8406.v|
+!i113 0
+R5
+vft232hq_recv
+Z6 !s110 1720765208
+!i10b 1
+!s100 hMAZZDze0JVKjdYVocj3g0
+ICKRklDh0fe7JjTPAb_[Hi1
+R2
+R3
+Z7 w1720765100
+Z8 8E:/wtyang/gaoyun/test/1x1/impl/gwsynthesis/NearInfrared.vg
+Z9 FE:/wtyang/gaoyun/test/1x1/impl/gwsynthesis/NearInfrared.vg
+L0 84
+R4
+r1
+!s85 0
+31
+Z10 !s108 1720765208.916000
+Z11 !s107 E:/wtyang/gaoyun/test/1x1/impl/gwsynthesis/NearInfrared.vg|
+Z12 !s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/impl/gwsynthesis/NearInfrared.vg|
+!i113 0
+R5
+vft232hq_recv_fifo
+Z13 !s110 1720765117
+!i10b 1
+!s100 X=W?JGZZPVHiz3eh_BcAA0
+I62Rk1njJ5;kD;ofFWX9240
+R2
+R3
+w1717644346
+8E:/wtyang/gaoyun/test/1x1/src/fifo_recv/fifo_recv.vo
+FE:/wtyang/gaoyun/test/1x1/src/fifo_recv/fifo_recv.vo
+L0 8
+R4
+r1
+!s85 0
+31
+!s108 1720765117.608000
+!s107 E:/wtyang/gaoyun/test/1x1/src/fifo_recv/fifo_recv.vo|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/fifo_recv/fifo_recv.vo|
+!i113 0
+R5
+vft232hq_send
+Z14 !s110 1720765115
+!i10b 1
+!s100 b<Vj@[<:5@==i1FD^O[o72
+Ia:9^RcAKk6E_cz>mEjGb03
+R2
+R3
+w1717663963
+8E:/wtyang/gaoyun/test/1x1/src/ft232hq_send.v
+FE:/wtyang/gaoyun/test/1x1/src/ft232hq_send.v
+L0 9
+R4
+r1
+!s85 0
+31
+!s108 1720765115.262000
+!s107 E:/wtyang/gaoyun/test/1x1/src/ft232hq_send.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/ft232hq_send.v|
+!i113 0
+R5
+vft232hq_send_fifo
+R13
+!i10b 1
+!s100 ZoKD;U03;Y9bI5Aj`YQFl3
+IjYZNN`L:?llLOA]A=CLlE3
+R2
+R3
+w1717642873
+8E:/wtyang/gaoyun/test/1x1/src/fifo_send/fifo_send.vo
+FE:/wtyang/gaoyun/test/1x1/src/fifo_send/fifo_send.vo
+L0 8
+R4
+r1
+!s85 0
+31
+!s108 1720765117.306000
+!s107 E:/wtyang/gaoyun/test/1x1/src/fifo_send/fifo_send.vo|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/fifo_send/fifo_send.vo|
+!i113 0
+R5
+vhc595d_drive
+R14
+!i10b 1
+!s100 =N@fMTHlZCneBB>5:F_h>3
+INSbdaDUPa[:aM;IzCjTz51
+R2
+R3
+w1720764210
+8E:/wtyang/gaoyun/test/1x1/src/hc595d_drive.v
+FE:/wtyang/gaoyun/test/1x1/src/hc595d_drive.v
+L0 1
+R4
+r1
+!s85 0
+31
+!s108 1720765115.566000
+!s107 E:/wtyang/gaoyun/test/1x1/src/hc595d_drive.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/hc595d_drive.v|
+!i113 0
+R5
+vhc595pw_drive
+!s110 1720766000
+!i10b 1
+!s100 [>]SM2JP7Bb<RQT>EPXE@3
+IlNRA^?7K3j7UFSRV>mzog2
+R2
+R3
+w1720764225
+8E:\wtyang\gaoyun\test\1x1\src\hc595pw_drive.v
+FE:\wtyang\gaoyun\test\1x1\src\hc595pw_drive.v
+L0 1
+R4
+r1
+!s85 0
+31
+!s108 1720766000.360000
+!s107 E:\wtyang\gaoyun\test\1x1\src\hc595pw_drive.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:\wtyang\gaoyun\test\1x1\src\hc595pw_drive.v|
+!i113 0
+R5
+vNearInfrared
+Z15 !s110 1720765116
+!i10b 1
+!s100 209UIc5]]ba;BM9iIVJAF1
+I3cmZ931lXKU_8jYAA^nS63
+R2
+R3
+w1718242710
+8E:/wtyang/gaoyun/test/1x1/src/NearInfrared.v
+FE:/wtyang/gaoyun/test/1x1/src/NearInfrared.v
+L0 1
+R4
+r1
+!s85 0
+31
+!s108 1720765116.153000
+!s107 E:/wtyang/gaoyun/test/1x1/src/NearInfrared.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/NearInfrared.v|
+!i113 0
+R5
+n@near@infrared
+vpll_clk
+R6
+!i10b 1
+!s100 <d^3;cPc5B;e8T5N]^g`D2
+Im1Efa6l1U;W;7LikD6MJ;1
+R2
+R3
+R7
+R8
+R9
+L0 21
+R4
+r1
+!s85 0
+31
+R10
+R11
+R12
+!i113 0
+R5
+vrecv_data_analys
+R15
+!i10b 1
+!s100 8KmZP^JZU^PJXVVc;abad0
+I;kMlBaY=FOCkb2glVA2;[0
+R2
+R3
+w1720689317
+8E:/wtyang/gaoyun/test/1x1/src/recv_data_analys.v
+FE:/wtyang/gaoyun/test/1x1/src/recv_data_analys.v
+FE:\wtyang\gaoyun\test\1x1\src\recv_cmd_para.v
+L0 1
+R4
+r1
+!s85 0
+31
+!s108 1720765116.738000
+!s107 E:\wtyang\gaoyun\test\1x1\src\recv_cmd_para.v|E:/wtyang/gaoyun/test/1x1/src/recv_data_analys.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/recv_data_analys.v|
+!i113 0
+R5
+vsend_data_analys
+R1
+!i10b 1
+!s100 LmI;RhnPW76GlW7U1oR0k1
+IPO3`2FSBLOPi;PZ;^_Nk>1
+R2
+R3
+w1720764193
+8E:/wtyang/gaoyun/test/1x1/src/send_data_analys.v
+FE:/wtyang/gaoyun/test/1x1/src/send_data_analys.v
+L0 1
+R4
+r1
+!s85 0
+31
+!s108 1720765113.999000
+!s107 E:/wtyang/gaoyun/test/1x1/src/send_data_analys.v|
+!s90 -reportprogress|300|-work|work|-vopt|-stats=none|E:/wtyang/gaoyun/test/1x1/src/send_data_analys.v|
+!i113 0
+R5

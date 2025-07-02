@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gowin-synthesis-project>
+<Project>
+    <Version>beta</Version>
+    <Device id="GW2A-55C" package="PBGA484" speed="8" partNumber="GW2A-LV55PG484C8/I7"/>
+    <FileList>
+        <File path="D:/WTY/wtyang/NearInfrared/gaoyun/test/5.24(ADC1278 8X8)/src/ad1278_fifo/temp/FIFO/fifo_define.v" type="verilog"/>
+        <File path="D:/WTY/wtyang/NearInfrared/gaoyun/test/5.24(ADC1278 8X8)/src/ad1278_fifo/temp/FIFO/fifo_parameter.v" type="verilog"/>
+        <File path="C:/Gowin/Gowin_V1.9.11.01_x64/IDE/ipcore/FIFO/data/edc.v" type="verilog"/>
+        <File path="C:/Gowin/Gowin_V1.9.11.01_x64/IDE/ipcore/FIFO/data/fifo.v" type="verilog"/>
+        <File path="C:/Gowin/Gowin_V1.9.11.01_x64/IDE/ipcore/FIFO/data/fifo_top.v" type="verilog"/>
+    </FileList>
+    <OptionList>
+        <Option type="disable_insert_pad" value="1"/>
+        <Option type="include_path" value="D:/WTY/wtyang/NearInfrared/gaoyun/test/5.24(ADC1278 8X8)/src/ad1278_fifo/temp/FIFO"/>
+        <Option type="output_file" value="ad1278_fifo.vg"/>
+        <Option type="output_template" value="ad1278_fifo_tmp.v"/>
+        <Option type="ram_balance" value="1"/>
+        <Option type="ram_rw_check" value="1"/>
+        <Option type="vcc" value="1.0"/>
+        <Option type="vccx" value="3.3"/>
+        <Option type="verilog_language" value="sysv-2017"/>
+    </OptionList>
+</Project>

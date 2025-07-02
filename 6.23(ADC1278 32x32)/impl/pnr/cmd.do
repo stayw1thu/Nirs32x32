@@ -1,0 +1,19 @@
+-d D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\impl\gwsynthesis\NearInfrared.vg
+-p GW2A-55C-PBGA484-8
+-pn GW2A-LV55PG484C8/I7
+-cst D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\NearInfrared.cst
+-cfg D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\impl\pnr\device.cfg
+-sdc D:\WTY\wtyang\NearInfrared\gaoyun\test\6.23(ADC1278 32x32)\src\NearInfrared.sdc
+-bit
+-tr
+-ph
+-timing
+-cst_error
+-no_cst_warning
+-convert_sdp32_36_to_sdp16_18
+-place_option 0
+-route_option 0
+-clock_route_order 0
+-correct_hold 1
+-route_maxfan 23
+-global_freq 50.000

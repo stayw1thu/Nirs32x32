@@ -1,0 +1,240 @@
+[
+ {
+  "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/NearInfrared.v",
+  "InstLine" : 1,
+  "InstName" : "NearInfrared",
+  "Mode" : 1,
+  "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/NearInfrared.v",
+  "ModuleLine" : 1,
+  "ModuleName" : "NearInfrared",
+  "Process" : 0,
+  "SetMode" : false,
+  "SetProcess" : false,
+  "SubNodes" : [
+   {
+    "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/NearInfrared.v",
+    "InstLine" : 139,
+    "InstName" : "u_recv_data_analys",
+    "Mode" : 1,
+    "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/recv_data_analys.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "recv_data_analys",
+    "Process" : 0,
+    "SetMode" : false,
+    "SetProcess" : false,
+    "SubNodes" : [
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/recv_data_analys.v",
+      "InstLine" : 300,
+      "InstName" : "u_ft232hq_recv",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/ft232hq_recv.v",
+      "ModuleLine" : 9,
+      "ModuleName" : "ft232hq_recv",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/recv_data_analys.v",
+      "InstLine" : 316,
+      "InstName" : "u_ft232_fifo",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/fifo_recv/fifo_recv.v",
+      "ModuleLine" : 598,
+      "ModuleName" : "ft232hq_recv_fifo",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false,
+      "SubNodes" : [
+       {
+        "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/fifo_recv/fifo_recv.v",
+        "InstLine" : 623,
+        "InstName" : "fifo_inst",
+        "Mode" : 1,
+        "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/fifo_recv/fifo_recv.v",
+        "ModuleLine" : 10,
+        "ModuleName" : "~fifo.ft232hq_recv_fifo",
+        "Process" : 0,
+        "SetMode" : false,
+        "SetProcess" : false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/NearInfrared.v",
+    "InstLine" : 161,
+    "InstName" : "u_send_data_analys",
+    "Mode" : 1,
+    "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "send_data_analys",
+    "Process" : 0,
+    "SetMode" : false,
+    "SetProcess" : false,
+    "SubNodes" : [
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2454,
+      "InstName" : "u_ft232hq_send",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/ft232hq_send.v",
+      "ModuleLine" : 9,
+      "ModuleName" : "ft232hq_send",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2470,
+      "InstName" : "u_ft232_send_fifo",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/fifo_send/fifo_send.v",
+      "ModuleLine" : 799,
+      "ModuleName" : "ft232hq_send_fifo",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false,
+      "SubNodes" : [
+       {
+        "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/fifo_send/fifo_send.v",
+        "InstLine" : 824,
+        "InstName" : "fifo_inst",
+        "Mode" : 1,
+        "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/fifo_send/fifo_send.v",
+        "ModuleLine" : 10,
+        "ModuleName" : "~fifo.ft232hq_send_fifo",
+        "Process" : 0,
+        "SetMode" : false,
+        "SetProcess" : false
+       }
+      ]
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2482,
+      "InstName" : "u_adc1_ads8406",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/ads8406.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "ads8406",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2497,
+      "InstName" : "u_adc2_ads8406",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/ads8406.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "ads8406",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2512,
+      "InstName" : "u_adc3_ads8406",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/ads8406.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "ads8406",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2527,
+      "InstName" : "u_adc4_ads8406",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/ads8406.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "ads8406",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2543,
+      "InstName" : "gain_hc595d_drive",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/hc595d_drive.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "hc595d_drive",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2559,
+      "InstName" : "ain_hc595d_drive",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/hc595d_ain_drive.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "hc595d_ain_drive",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2574,
+      "InstName" : "laser_hc595pw_drive",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/hc595pw_drive.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "hc595pw_drive",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2589,
+      "InstName" : "rgled_drive_int",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/hc595pw_rgled_drive.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "rgled_drive",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2605,
+      "InstName" : "ad9833_wl1",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/ad9833.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "ad9833",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     },
+     {
+      "InstFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/send_data_analys.v",
+      "InstLine" : 2618,
+      "InstName" : "ad9833_wl2",
+      "Mode" : 1,
+      "ModuleFile" : "E:/wtyang/gaoyun/test/11.15(perfect 16x16)/src/ad9833.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "ad9833",
+      "Process" : 0,
+      "SetMode" : false,
+      "SetProcess" : false
+     }
+    ]
+   }
+  ]
+ }
+]

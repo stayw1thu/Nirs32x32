@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module name="ad1278_fifo" Register="22" Alu="4" Lut="34" Bsram="6" Ssram="4" T_Register="22(22)" T_Alu="4(4)" T_Lut="34(34)" T_Bsram="6(6)" T_Ssram="4(4)"/>

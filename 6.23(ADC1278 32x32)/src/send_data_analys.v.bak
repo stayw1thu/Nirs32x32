@@ -1,0 +1,1774 @@
+module send_data_analys(
+	input 							clk,
+	input							rst_n,
+	
+	//ft232发送接口
+	input  		wire				ft232_clk,
+	input  		wire				ft232_rd_n,
+	input  		wire				ft232_txe_n,
+	output 	wire				ft232_wr_n,
+	output 	wire [7:0]		ft232_data_send,
+	output		wire				ft232_siwu_n,
+	
+	//uart1接收接口
+	input   		wire        		uart1_rxd,         	//UART1接收端口
+	
+	//时钟倍频接口
+	input   		wire				clk_100m,
+	input		wire				clk_rst_n,
+	
+	//ads8406接口
+	input   		wire				clk_2m,
+	output		wire				adc1_rd,
+	output 	wire				adc1_convst,
+	output		wire				adc1_reset,
+	input		wire [15:0]	adc1_data,
+	
+	output		wire				adc2_rd,
+	output 	wire				adc2_convst,
+	output		wire				adc2_reset,
+	input		wire [15:0]	adc2_data,
+	
+	output		wire				adc3_rd,
+	output 	wire				adc3_convst,
+	output		wire				adc3_reset,
+	input		wire [15:0]	adc3_data,
+	
+	output		wire				adc4_rd,
+	output 	wire				adc4_convst,
+	output		wire				adc4_reset,
+	input		wire [15:0]	adc4_data,
+	
+	//ain接口
+	output 	wire 				ain_rck,
+	output 	wire					ain_scl,
+	output 	wire					ain_sck,
+	output 	wire 				ain_ser,
+	
+	//gain 接口
+	output 	wire 				gain_rck,
+	output 	wire					gain_scl,
+	output 	wire					gain_sck,
+	output 	wire 				gain_ser,
+	
+	//laser接口
+	output 	wire 				laser_rck,
+	output 	wire					laser_scl,
+	output 	wire					laser_sck,
+	output 	wire 				laser_ser,
+	
+	//wl1接口
+	output		wire					wl1_fsync,
+	output		wire					wl1_sclk,
+	output		wire					wl1_sdata,
+	
+	//wl2接口
+	output		wire					wl2_fsync,
+	output		wire					wl2_sclk,
+	output		wire					wl2_sdata,
+	
+	//通道数据
+	input 		wire  [7:0]   	sampling_channel_data,
+	input 		wire  [7:0]   	laser_channel_data,
+	input 		wire  [7:0]   	sampling_frequency_data,
+	input 		wire  [15:0]  channel_samp_frequency,
+	input		wire	[31:0]	testpkg,
+	
+	//状态
+	input  		wire	[5:0]   	state,	
+	output 	reg          		state_flag, //完成标志
+	output   	wire				test
+);
+
+parameter  	CLK_FREQ = 50000000;       //定义系统时钟频率
+parameter  	UART_BPS = 1382400;         //定义串口波特率
+parameter  	TIME_COUNT_NUM = 50000000; //1s
+
+//状态定义
+parameter  	FREE_STATE = 6'b000000;      //空闲状态
+parameter  	CHECK_STATE = 6'b000001;     //查询状态
+parameter  	CONFIG_STATE = 6'b000010;    //配置状态
+parameter  	START_STATE = 6'b000100;     //开始状态
+parameter  	STOP_STATE = 6'b001000;      //停止状态
+parameter	CALIBRATION_STATE = 6'b010000;	//校准状态
+parameter	STOP_CALI_STATE = 6'b100000;		//停止校准
+
+parameter  	PKG_CNT      = 10'd70;		  //数据包长度
+parameter  	CMD_PKGEND   = 8'h90;	//数据包尾
+
+//校准参数
+parameter  	HIGH_LIMIT	= 16'd13000;//上限
+parameter  	LOW_LIMIT		= 16'd950;//下限
+parameter  	BASIC_LINE	= 16'd7890;//基线
+parameter	THRESHOLD	= 16'd160;//门限
+
+//ft232_fifo写接口
+reg 				ft232_wrreq;
+reg 	[7:0] 	ft232_data_in;
+wire 			ft232_wrfull;
+reg 	[7:0]   	fifo_cnt;
+
+//ft232_fifo读接口
+reg         		fifo_rd_en;
+wire  			ft232_rdreq/*synthesis keep*/;
+wire	[7:0] 	ft232_data_out/*synthesis keep*/;
+wire 			ft232_rdempty/*synthesis keep*/;
+
+//uart1_recv 接口
+wire       		uart1_recv_en;             //UART1接收完成使能
+reg 	[7:0] 	uart1_data_cnt;
+reg 	[7:0] 	uart1_data[3:0];
+reg        		uart1_recv_flag;
+
+//uart1_recv 上升沿接口
+wire 	   		uart1_en_flag;
+reg        		uart1_en_d0; 
+reg        		uart1_en_d1;
+
+//uart1校验数据接口
+reg 	[7:0] 	uart1_check_data;	
+reg 	    		uart1_check_flag;
+reg	[7:0]		check_data;
+reg 	[7:0]		channel_data;
+
+//uart1_recv fifo接口
+reg 				uart1_recv_wrreq;
+wire [7:0]			uart1_recv_data;
+wire 				uart1_recv_wrfull;
+reg					uart1_fifo_flag;
+reg 				uart1_recv_rdreq;
+wire [7:0]			uart1_fifo_data;
+wire				uart1_recv_rdempty;
+reg         		uart1_read_flag;
+reg         		uart1_fifo_start;
+
+//ADC数据接口
+wire [15:0]		adc1_read_data;
+wire 			adc1_read_flag;
+
+wire [15:0]		adc2_read_data;
+wire 			adc2_read_flag;
+
+wire [15:0]		adc3_read_data;
+wire 			adc3_read_flag;
+
+wire [15:0]		adc4_read_data;
+wire 			adc4_read_flag;
+
+reg				adc_en;
+
+//gain接口		
+reg 	[3:0]		gain_data;
+reg 	[7:0]			gain_data_len;
+reg 					gain_wr_en/*synthesis noprune*/;
+wire					gain_wr_finish;
+reg   [7:0]      	gain_channel_cnt;
+reg	[3:0]		gain_data_temp;
+
+//ain接口
+reg 	[15:0]		ain_data;
+reg	[7:0]			ain_data_len;
+reg					ain_wr_en/*synthesis noprune*/;
+wire  				ain_wr_finish;
+reg 	[3:0]			ain_4bit_data;
+reg	[3:0]			ain_4bit_data1;
+reg	[5:0]			ain_4bit_data2;
+reg	[5:0]			ain_4bit_data3;
+reg	[3:0]			ain_temp_data1;
+reg	[3:0]			ain_temp_data2;
+
+//laser接口
+reg	[24:0]			irq_count;
+reg 	[7:0]			laser_data[4:0];
+reg	[23:0]			laser_wr_data;
+reg	[7:0]			laser_uart_data[3:0];
+reg	[5:0]			laser_data_len;
+reg	[3:0]			data_len;
+reg	[7:0]			data_cnt;
+reg					laser_wr_en/*synthesis noprune*/;
+wire  				laser_wr_finish;
+reg	[7:0]			set_laser_channel;
+reg   [7:0]       	laser_channel_temp;
+reg   [7:0]       	laser_channel_cnt;
+reg	[3:0]			laser_state;
+reg	[7:0]			data;
+
+//命令接口
+reg start_cmd_en;
+reg stop_cmd_en;
+reg check_cmd_en;
+reg cali_cmd_en;
+reg stop_cali_cmd_en;
+
+//wl1接口
+reg	[3:0]			wl1_state;
+reg	[15:0]		wl1_data;
+reg	[7:0]			wl1_data_len;
+reg					wl1_wr_en;
+wire					wl1_wr_finish;
+
+//wl2接口
+reg	[3:0]			wl2_state;
+reg	[15:0]		wl2_data;
+reg	[7:0]			wl2_data_len;
+reg					wl2_wr_en;
+wire					wl2_wr_finish;
+
+//WL1读取wl1_wr_finish上升沿接口
+wire			wl1_en_flag;
+reg			wl1_en_d0;
+reg			wl1_en_d1;
+reg			wl1_finish;
+
+//WL2读取wl2_wr_finish上升沿接口
+wire			wl2_en_flag;
+reg			wl2_en_d0;
+reg			wl2_en_d1;
+reg			wl2_finish;
+
+//计时接口
+reg [27:0] 	channel_count;
+reg [21:0] 	cali_send_time;
+
+//发送数据包接口
+reg   			check_cmd_refresh;
+reg	[7:0] 	daq_pkg_data_cnt;
+reg 	[7:0]		send_pkg[PKG_CNT-1:0];//数据包长度为70byte
+reg 	[7:0] 	send_check_data;     //校验数据
+reg 				send_check_flag		 ;//数据校验标志
+reg 				send_head_flag		 ;//
+reg 	[7:0]		send_check_cnt;      //校验数据计数
+reg 				send_check_finish	;//数据校验完成
+reg 				send_pack_finish	;//数据打包完成
+reg 				check_send_pack_finish	;//check数据打包完成
+reg 	[7:0]		send_pkg_data[PKG_CNT-1:0];//数据包长度为70byte
+
+reg				cali_send_pack_finish;//校准数据打包完成
+reg         		stop_cali_delay_flag/*synthesis noprune*/;
+reg				cali_cmd_refresh;
+reg	[3:0] 	cali_state;
+
+reg         		send_pkg_head;
+reg         		stop_delay_flag/*synthesis noprune*/;
+
+reg         		send_pkg_start_f1;
+reg         		send_pkg_start_f2;
+wire        		send_pkg_start_f;
+
+reg         		send_data_start_f1;
+reg         		send_data_start_f2;
+wire        		send_data_start_f;
+
+//通道切换接口
+reg 	[7:0]		samp_channel_data;
+reg 	[27:0]	samp_count_num;	
+
+//pga
+reg	[6:0] 	adjust_finish_cnt;
+reg	[5:0] 	cali_cnt;
+reg	[31:0] 	cali_timecnt;
+reg	[5:0]	gain_laser_cnt;
+reg	[15:0] 	high_temp;	
+reg	[10:0] 	adjust_cnt;	
+reg			effective;
+reg	[4:0]	cali_channel1;
+reg	[4:0]	cali_channel2;
+//reg	[39:0] cali_channel_state;
+
+//adc读取finish_flag上升沿接口
+wire 	   	adc1_en_flag;
+reg        	adc1_en_d0; 
+reg        	adc1_en_d1;
+
+wire 	   	adc2_en_flag;
+reg        	adc2_en_d0; 
+reg        	adc2_en_d1;
+
+wire 	   	adc3_en_flag;
+reg        	adc3_en_d0; 
+reg        	adc3_en_d1;
+
+wire 	   	adc4_en_flag;
+reg        	adc4_en_d0; 
+reg        	adc4_en_d1;
+
+wire 	   	adc_switch_flag;
+
+//其他
+reg 	[7:0]		count/*synthesis noprune*/;
+reg				state_flag_temp;
+reg 	[15:0]	datapkg_length;
+reg 	[12:0]	channel_count_pkg;
+reg 	[15:0]	calipkg_length;	
+
+wire  [12:0]   rdusedw_cnt;
+wire  [12:0]   wrusedw_cnt;
+
+//test
+reg	[15:0]	test_cnt;
+parameter	trash_pkg = 0;
+
+//*****************************************************
+//**                    main code
+//*****************************************************
+//捕获uart1_recv_en上升沿，得到一个时钟周期的脉冲信号
+assign uart1_en_flag = (~uart1_en_d1) & uart1_en_d0;
+
+assign adc1_en_flag = (~adc1_en_d1) & adc1_en_d0;
+assign adc2_en_flag = (~adc2_en_d1) & adc2_en_d0;
+assign adc3_en_flag = (~adc3_en_d1) & adc3_en_d0;
+assign adc4_en_flag = (~adc4_en_d1) & adc4_en_d0;
+
+assign adc_switch_flag  = (~adc1_en_d0) & adc1_en_d1;
+
+assign send_pkg_start_f =  (~send_pkg_start_f2) & send_pkg_start_f1;
+assign send_data_start_f =  (~send_data_start_f2) & send_data_start_f1;
+
+assign wl1_en_flag = (~wl1_en_d1) & wl1_en_d0;
+assign wl2_en_flag = (~wl2_en_d1) & wl2_en_d0;
+
+//初始化数组
+integer a,i;
+
+initial begin
+
+            adjust_cnt <= 11'b0; // 将每个元素赋值为0
+				adjust_finish_cnt <= 8'b0;
+				high_temp <= 16'd7900;
+
+end
+
+//对使能信号wl_en延迟两个时钟周期
+always @(posedge clk or negedge rst_n) begin         
+    if (!rst_n) begin		
+		wl1_en_d0 <= 1'b0;
+		wl1_en_d1 <= 1'b0;
+		wl2_en_d0 <= 1'b0;
+		wl2_en_d1 <= 1'b0;
+    end                                                      
+    else begin                                               
+      	wl1_en_d0 <= wl1_wr_finish;
+		wl1_en_d1 <= wl1_en_d0;
+		wl2_en_d0 <= wl2_wr_finish;
+		wl2_en_d1 <= wl2_en_d0;
+    end
+end
+
+//对发送使能信号uart_en延迟两个时钟周期
+always @(posedge clk or negedge rst_n) begin         
+    if (!rst_n) begin		
+		uart1_en_d0 <= 1'b0;
+		uart1_en_d1 <= 1'b0;
+    end                                                      
+    else begin                                               
+      	uart1_en_d0 <= uart1_recv_en;
+		uart1_en_d1 <= uart1_en_d0;
+    end
+end
+
+
+//对ADC接收数据完成信号adc1_read_flag延迟两个周期
+always @(posedge clk or negedge rst_n) begin         
+    if (!rst_n) begin		
+		adc1_en_d0 <= 1'b0;
+		adc1_en_d1 <= 1'b0;
+		
+		adc2_en_d0 <= 1'b0;
+		adc2_en_d1 <= 1'b0;
+		
+		adc3_en_d0 <= 1'b0;
+		adc3_en_d1 <= 1'b0;
+		
+		adc4_en_d0 <= 1'b0;
+		adc4_en_d1 <= 1'b0;
+    end                                                      
+    else begin                                               
+      	adc1_en_d0 <= adc1_read_flag;
+		adc1_en_d1 <= adc1_en_d0;
+		
+		adc2_en_d0 <= adc2_read_flag;
+		adc2_en_d1 <= adc2_en_d0;
+		
+		adc3_en_d0 <= adc3_read_flag;
+		adc3_en_d1 <= adc3_en_d0;
+		
+		adc4_en_d0 <= adc4_read_flag;
+		adc4_en_d1 <= adc4_en_d0;
+    end
+end
+
+//状态操作
+always @(posedge clk_100m or negedge rst_n) begin         
+    if (!rst_n) begin
+		state_flag_temp <= 0;
+	   	start_cmd_en <= 0;
+	   	stop_cmd_en <= 0;
+		cali_cmd_en <= 0;
+		check_cmd_refresh <= 0;
+		cali_cmd_refresh <= 0;
+		stop_cali_delay_flag <= 0;
+		stop_delay_flag <= 0;
+		samp_channel_data <= sampling_channel_data;	
+		samp_count_num <= (2000000 / sampling_frequency_data 
+							 / laser_channel_data);
+    end                                                      
+    else begin 
+		samp_count_num <= (2000000 / sampling_frequency_data 
+							 / laser_channel_data);
+		case(state)
+			FREE_STATE:begin
+				state_flag_temp <= 0;
+			end
+			CHECK_STATE:begin
+				check_cmd_refresh <= 1;
+				if(check_cmd_en)begin
+					check_cmd_refresh <= 0;
+					state_flag_temp <= 1;
+				end
+			end
+			CONFIG_STATE:begin
+				state_flag_temp <= 1;
+				if(sampling_channel_data<=8)begin
+					samp_channel_data <= sampling_channel_data;
+				end
+				else begin
+					samp_channel_data <= 8;
+				end
+				samp_count_num <= (2000000 / sampling_frequency_data 
+							 / laser_channel_data);
+			end
+			START_STATE:begin
+				cali_cmd_en <= 0;
+				stop_cmd_en <= 0;
+				if(stop_cmd_en==0)begin
+					start_cmd_en <= 1;
+					state_flag_temp <= 1;
+				end
+			end
+			STOP_STATE:begin 
+//				if(start_cmd_en==0)begin
+//				state_flag_temp <= 1;
+//				stop_delay_flag <= 0;
+//				end
+//				stop_delay_flag <= 1;	
+				stop_cmd_en <= 1;
+				start_cmd_en <= 0;
+				state_flag_temp <= 1;
+			end
+			CALIBRATION_STATE:begin
+				if(stop_cmd_en==0)begin
+					cali_cmd_en <= 1;
+				end
+				start_cmd_en <= 0;
+				stop_cmd_en <= 0;
+				state_flag_temp <= 1;
+			end
+			STOP_CALI_STATE:begin
+				stop_cali_delay_flag <= 1;
+				cali_cmd_en <= 0;
+				if(stop_cali_cmd_en==1)begin
+					stop_cali_delay_flag <= 0;
+				    state_flag_temp <= 1;
+				end
+			end
+			default:begin
+				state_flag_temp <= 1;
+			end
+		endcase
+//			
+//				if(daq_pkg_data_cnt==2)begin
+//					start_cmd_en <= 0;
+//					stop_cmd_en <= 1;
+//				end
+//				if(daq_pkg_data_cnt==3&&cali_cmd_refresh==1)begin
+//					cali_cmd_en <= 0;
+//					stop_cali_cmd_en <= 1;
+//					cali_cmd_refresh <= 0;
+//				end
+
+		if(sampling_channel_data<=8)begin
+			samp_channel_data <= sampling_channel_data;
+		end
+		else begin
+			samp_channel_data <= 8;
+		end
+		
+//		if(sampling_frequency_data == 20)begin
+//			datapkg_length <= ((channel_samp_frequency*sampling_channel_data/laser_channel_data/sampling_frequency_data) - sampling_channel_data*trash_pkg)*2;
+//		end
+//		else begin
+			datapkg_length <= ((channel_samp_frequency*sampling_channel_data/laser_channel_data/sampling_frequency_data))*2+4;		 //数据包长度定义
+//		end
+		
+		calipkg_length <= laser_channel_data*sampling_channel_data;
+		channel_count_pkg <= (channel_samp_frequency/laser_channel_data/sampling_frequency_data);
+    end
+end
+
+always @(posedge clk or negedge rst_n) begin
+	if (!rst_n) begin
+		state_flag <= 0;
+	end
+	else begin
+		state_flag <= state_flag_temp;
+	end
+end
+
+//计时操作
+always @(posedge clk_2m or negedge rst_n) begin         
+    if (!rst_n) begin
+		channel_count <= 0;
+    end                                                      
+    else begin                                               
+       if((start_cmd_en == 1 && adc_en == 1)||(cali_cmd_en == 1 && adc_en == 1))begin
+			 if(channel_count == samp_count_num-1)begin
+				 channel_count <= 0;
+			 end
+			 else begin
+				 channel_count <= channel_count + 1;
+			 end
+		 end
+		 else begin
+			 channel_count <= 0;
+		 end
+    end
+end
+
+//校准计时
+always @(posedge clk_2m or negedge rst_n)begin
+	if(!rst_n)begin
+		cali_timecnt <= 0;
+	end
+	else begin
+		if(cali_cmd_en && adc_en)begin
+			if(cali_timecnt == 27'd30000000)begin//1分钟
+				cali_timecnt <= cali_timecnt;
+			end
+			else begin
+				cali_timecnt <= cali_timecnt + 1;
+			end
+		end
+		else begin
+			cali_timecnt <= 0;
+		end
+	end
+end
+
+//ADC使能操作
+always @(posedge clk or negedge rst_n) begin         
+    if (!rst_n) begin
+       adc_en <= 0;
+    end                                                      
+    else begin                                               
+        if(start_cmd_en == 1 || cali_cmd_en == 1)begin
+				adc_en <= 1;
+		  end
+		  else begin
+				adc_en <= 0;
+		  end
+    end
+end
+
+//WL1操作
+always @(posedge clk or negedge rst_n) begin
+	if (!rst_n) begin
+		wl1_data		<= 16'd0;
+		wl1_data_len	<= 7'd16;
+		wl1_wr_en		<= 0;
+		wl1_finish		<= 0;
+		wl1_state		<= 0;
+	end
+	else begin
+		if (start_cmd_en == 1||cali_cmd_en == 1) begin
+			 case(wl1_state)
+			 4'd0:begin//复位
+			 wl1_data  <= 16'b0000_0001_0000_0000;
+			 wl1_wr_en <= 1;
+			 wl1_state <= 4'd1;
+			 end
+			 4'd1:begin
+			 if(wl1_en_flag)begin
+			 wl1_wr_en <= 0;
+			 wl1_state <= 4'd2;
+			 end
+			 end
+			 4'd2:begin//选择一次性写入
+			 wl1_data  <= 16'b0010_0001_0000_0000;
+			 wl1_wr_en <= 1;
+			 wl1_state <= 4'd3;
+			 end
+			 4'd3:begin
+			 if(wl1_en_flag)begin
+			 wl1_wr_en <= 0;
+			 wl1_state <= 4'd4;
+			 end
+			 end
+			 4'd4:begin//写LSB
+			 wl1_data  <= 16'b0101_1000_1001_0100;//1khz
+			 //(1.5k)wl1_data  <= 16'b0110_0100_1101_1110;
+			 wl1_wr_en <= 1;
+			 wl1_state <= 4'd5;
+			 end
+			 4'd5:begin
+			 if(wl1_en_flag)begin
+			 wl1_wr_en <= 0;
+			 wl1_state <= 4'd6;
+			 end
+			 end
+			 4'd6:begin//写MSB
+			 wl1_data  <= 16'b0100_0000_0001_0000;//1khz
+			 //(1.5k)wl1_data  <= 16'b0100_0000_0001_1000;
+			 wl1_wr_en <= 1;
+			 wl1_state <= 4'd7;
+			 end
+			 4'd7:begin
+			 if(wl1_en_flag)begin
+			 wl1_wr_en <= 0;
+			 wl1_state <= 4'd8;
+			 end
+			 end
+			 4'd8:begin//输出正弦波
+			 wl1_data  <= 16'b0000_0000_0000_0000;
+			 wl1_wr_en <= 1;
+			 wl1_state <= 4'd9;
+			 end
+			 4'd9:begin
+			 if(wl1_en_flag)begin
+			 wl1_wr_en <= 0;
+			 wl1_state <= 4'd9;
+			 end
+			 end
+			 default:begin
+				wl1_wr_en <= 0;
+				wl1_data  <= 16'd0;
+			 end
+			 endcase	
+		end
+//		else if(stop_cmd_en)begin
+//			wl1_wr_en <= 1;
+//			wl1_data  <= 16'b0010_0000_0100_0000;
+//			wl1_state <= 0;
+//		end
+		else begin
+			wl1_wr_en <= 0;
+			wl1_data  <= 16'd0;
+			wl1_state <= 0;
+		end
+	end
+end
+
+//WL2操作
+always @(posedge clk or negedge rst_n) begin
+	if (!rst_n) begin
+		wl2_data		<= 16'd0;
+		wl2_data_len	<= 7'd16;
+		wl2_wr_en		<= 0;
+		wl2_finish		<= 0;
+		wl2_state		<= 0;
+	end
+	else begin
+		if (start_cmd_en == 1||cali_cmd_en == 1) begin
+			 case(wl2_state)
+			 4'd0:begin//复位
+			 wl2_data  <= 16'b0000_0001_0000_0000;
+			 wl2_wr_en <= 1;
+			 wl2_state <= 4'd1;
+			 end
+			 4'd1:begin
+			 if(wl2_en_flag)begin
+			 wl2_wr_en <= 0;
+			 wl2_state <= 4'd2;
+			 end
+			 end
+			 4'd2:begin//选择一次性写入
+			 wl2_data  <= 16'b0010_0001_0000_0000;
+			 wl2_wr_en <= 1;
+			 wl2_state <= 4'd3;
+			 end
+			 4'd3:begin
+			 if(wl2_en_flag)begin
+			 wl2_wr_en <= 0;
+			 wl2_state <= 4'd4;
+			 end
+			 end
+			 4'd4:begin//写LSB
+			 wl2_data  <= 16'b0110_0100_1101_1110; //(1.5k)
+			 //16'b0101_1000_1001_0100;//1khz
+			 wl2_wr_en <= 1;
+			 wl2_state <= 4'd5;
+			 end
+			 4'd5:begin
+			 if(wl2_en_flag)begin
+			 wl2_wr_en <= 0;
+			 wl2_state <= 4'd6;
+			 end
+			 end
+			 4'd6:begin//写MSB
+			 wl2_data  <= 16'b0100_0000_0001_1000;//(1.5k)
+			 //16'b0100_0000_0001_0000;//1khz
+			 wl2_wr_en <= 1;
+			 wl2_state <= 4'd7;
+			 end
+			 4'd7:begin
+			 if(wl2_en_flag)begin
+			 wl2_wr_en <= 0;
+			 wl2_state <= 4'd8;
+			 end
+			 end
+			 4'd8:begin//输出正弦波
+			 wl2_data  <= 16'b0000_0000_0000_0000;
+			 wl2_wr_en <= 1;
+			 wl2_state <= 4'd9;
+			 end
+			 4'd9:begin
+			 if(wl2_en_flag)begin
+			 wl2_wr_en <= 0;
+			 wl2_state <= 4'd9;
+			 end
+			 end
+			 default:begin
+				wl2_wr_en <= 0;
+				wl2_data  <= 16'd0;
+			 end
+			 endcase	
+		end
+//		else if(stop_cmd_en)begin
+//			wl1_wr_en <= 1;
+//			wl1_data  <= 16'b0010_0000_0100_0000;
+//			wl2_state <= 0;
+//		end
+		else begin
+			wl2_wr_en <= 0;
+			wl2_data  <= 16'd0;
+			wl2_state <= 0;
+		end
+	end
+end
+
+//laser操作
+always @(posedge clk or negedge rst_n) begin
+	if (!rst_n) begin
+		set_laser_channel <= laser_channel_data;
+		laser_channel_cnt <= 1;
+		data_len <= 3;
+		data_cnt <= 2;
+		laser_state <= 4'h0;
+		irq_count <= 25'h0;
+		data <= 8'h00;
+		laser_data[0]  <= 8'h8c;
+		laser_data[1]	<= 8'h88;
+		laser_data[2]	<= 8'h88;
+		laser_wr_data 	<= 24'h0;
+		laser_data_len <= 24;
+		laser_wr_en		<= 0;
+	end
+	else begin
+	if(start_cmd_en == 1 || cali_cmd_en == 1)begin
+		set_laser_channel <= laser_channel_data;
+		case(laser_state)
+		4'h0:begin
+			if(irq_count == (CLK_FREQ/laser_channel_data/sampling_frequency_data) -4)begin
+				irq_count <= 25'h0;
+				laser_state <= 4'h1;
+				if (laser_data[data_cnt] == 8'h88) begin//初始化
+					 laser_data[data_cnt] <= 8'h80;
+				end else begin
+					 laser_data[data_cnt] <= laser_data[data_cnt];
+				end
+					 laser_data[0] <= (laser_data[0] == 8'h8c || laser_data[0] == 8'h04) ? 8'h00 : laser_data[0];
+			end
+			else begin
+				laser_wr_en <= 0;
+				irq_count <= irq_count + 1;
+				laser_state <= 4'h0;
+			end
+		end
+		4'h1:begin
+			laser_wr_data <= {laser_data[0],laser_data[1], 8'h80};//写
+			laser_wr_en <= 1;
+			laser_state <= 4'h2;
+		end
+		4'h2:begin
+			if((laser_data[data_cnt] & 8'hf8) == 8'h80)begin
+				laser_channel_cnt <= 8 * laser_data[0] + laser_data[data_cnt][3:0]+1;//计数
+			end
+			else if((laser_data[data_cnt] & 8'h8f) == 8'h08)begin
+				laser_channel_cnt <= 8 * laser_data[0] + laser_data[data_cnt][7:4]+1;
+			end
+			laser_state <= 4'h3;
+		end
+		4'h3:begin
+			if(laser_channel_cnt !== set_laser_channel)begin
+				if((laser_data[data_cnt] & 8'hf8) == 8'h80)begin//写低4位
+					laser_data[data_cnt] <= (laser_data[data_cnt] == 8'h87) ? 8'h08 : laser_data[data_cnt] + 8'h01;
+					laser_data[0] <= (laser_data[data_cnt] == 8'h87) ? laser_data[0] + 1 : laser_data[0];
+				end	
+				else if((laser_data[data_cnt] & 8'h8f) == 8'h08)begin//写高4位
+					laser_data[data_cnt] <= (laser_data[data_cnt] == 8'h78) ? 8'h88 : laser_data[data_cnt] + 8'h10;
+					laser_data[0] <= (laser_data[data_cnt] == 8'h78) ? laser_data[0] + 1 : laser_data[0];
+					data_cnt <= (laser_data[data_cnt] == 8'h78) ? data_cnt - 1 : data_cnt;
+				end
+			end
+			else begin//全部写完复位
+					laser_data[0] <= 8'h8c;
+					laser_data[1] <= 8'h88;
+					laser_data[2] <= 8'h88;
+					data_cnt <= data_len - 1;
+			end
+			if(data_cnt==0)begin
+				data_cnt <= data_len -1;
+			end
+			laser_state <= 4'h0;
+		end
+		default:begin
+				;
+		end
+		endcase
+	end
+	else if(stop_cmd_en == 1 || stop_cali_cmd_en == 1)begin
+		laser_data[0]  <= 8'h8c;
+		laser_data[1]	<= 8'h88;
+		laser_data[2]	<= 8'h88;
+		laser_wr_en 	<= 0;
+		laser_state		<= 4'h0;
+		irq_count <= 25'h0;
+		data <= 8'h00;
+		data_cnt <= 2;
+		laser_channel_cnt <= 1;
+	end
+	end
+end
+		
+		
+
+
+//gain操作
+always @(posedge clk or negedge rst_n) begin         
+    if (!rst_n) begin
+         gain_data <= 4'h1;
+			gain_data_len <= 8'd4;
+			gain_wr_en <= 0;
+			cali_state <= 0;
+    end                                                      
+    else begin
+		  if(cali_cmd_en == 1)begin
+			 if(adc_switch_flag)begin
+			   if(cali_state !== 1)begin
+					gain_data <= gain_data_temp;
+					gain_wr_en	<= 1;
+					cali_state <= 0;
+					if(cali_timecnt == 27'd30000000)begin
+						cali_state <= 1;
+					end
+				end
+			  else if(cali_state == 1)begin
+					gain_data <= gain_data_temp;
+					gain_wr_en	<= 1;
+					cali_state <= 1;
+			  end
+			  
+			 end				
+			 else begin
+				 gain_wr_en <= 0;
+			 end
+		 end
+		 else if(stop_cali_cmd_en == 1)begin
+			 gain_data	<= gain_data;
+			 gain_wr_en <= 1;
+			 cali_state <= 2;
+		 end
+        else if(start_cmd_en == 1)begin
+				if(adc_switch_flag)begin
+					gain_data <= gain_data_temp;
+					gain_wr_en	<= 1;
+				end
+				else begin
+					gain_wr_en <= 0;
+				end
+		  end
+		  else if(stop_cmd_en == 1)begin
+				gain_data <= 4'h1;
+				gain_wr_en <= 1;
+				cali_state <= 0;
+		  end
+		  
+		  
+		 else begin
+			 gain_data  <= 4'h1;
+			 gain_data_len <= 8'd4;
+			 gain_wr_en    <= 0;
+		 end
+    end
+end
+
+
+//ain操作
+always @(posedge clk or negedge rst_n) begin         
+    if (!rst_n) begin
+		 ain_data <= 16'b1000_1000_1000_1000;
+		 ain_temp_data1 <= 4'd0;
+		 ain_temp_data2 <= 4'd0;
+		 ain_data_len <= 7'd16;
+		 ain_wr_en <= 0;
+		 ain_4bit_data <= 0;
+		 ain_4bit_data1 <= 4'd8;
+		 ain_4bit_data2 <= 6'd16;
+		 ain_4bit_data3 <= 6'd24;
+    end                                                      
+    else begin
+		 if(start_cmd_en == 1 || cali_cmd_en == 1)begin
+			 if(adc_switch_flag)begin
+				 ain_wr_en <= 1;	
+				 ain_data <= {4{ain_temp_data2[3:0]}};
+				 ain_temp_data1 <= ain_temp_data2;
+				 ain_4bit_data <= ain_temp_data1;
+				 ain_4bit_data1 <= ain_temp_data1 + 4'd8;
+				 ain_4bit_data2 <= ain_temp_data1 + 6'd16;
+				 ain_4bit_data3 <= ain_temp_data1 + 6'd24;
+				 if(ain_temp_data2 < samp_channel_data-1)begin
+				     ain_temp_data2 <= ain_temp_data2 + 1;  
+				 end	  
+				 else begin
+					  ain_temp_data2 <= 0; 
+				 end
+			 end
+			 else begin 
+				 ain_wr_en <= 0;
+			 end
+		 end
+		 else if(stop_cmd_en || stop_cali_cmd_en)begin
+			 ain_data <= 16'b1000_1000_1000_1000;
+			 ain_4bit_data <= 0;
+		 	 ain_4bit_data1 <= 4'd8;
+			 ain_4bit_data2 <= 6'd16;
+		 	 ain_4bit_data3 <= 6'd24;
+			 ain_temp_data1 <= 4'd0;
+			 ain_temp_data2 <= 4'd0;
+			 ain_wr_en <= 1;
+		 end
+		 else begin
+			 ain_data <= 16'b1000_1000_1000_1000;
+			 ain_temp_data1 <= 4'd0;
+			 ain_temp_data2 <= 4'd0;
+			 ain_data_len <= 7'd16;
+			 ain_wr_en <= 0;
+			 ain_4bit_data <= 0;
+		 	 ain_4bit_data1 <= 4'd8;
+			 ain_4bit_data2 <= 6'd16;
+		 	 ain_4bit_data3 <= 6'd24;
+		 end         
+    end
+end
+
+//有效通道
+always@(posedge clk or negedge rst_n)begin
+	if(!rst_n)begin
+		cali_channel1 <= 20;
+		cali_channel2 <= 20;
+	end
+	else begin
+		if(cali_cmd_en)begin
+		if(cali_state == 0)begin
+			if(laser_channel_cnt < 9)begin
+				if((laser_channel_cnt-1)*8+ain_4bit_data == 0)begin
+					cali_channel1 <= 0;
+					cali_channel2 <= 20;
+				end
+				else begin
+					cali_channel1 <= 20;
+					cali_channel2 <= 20;
+				end
+			end
+		end
+		else if(cali_state != 0)begin
+			cali_channel2 <= 20;
+			cali_channel1 <= 20;
+		end
+		end
+		else if(stop_cmd_en == 1||stop_cali_cmd_en == 1)begin
+			cali_channel1 <= 20;
+			cali_channel2 <= 20;
+		end
+	end
+end
+
+//校准判断
+always @(posedge clk or  negedge rst_n) begin
+	if (!rst_n) begin
+	end
+	else begin
+		if (cali_cmd_en) begin
+			if (adc1_en_flag == 1) begin
+				if(cali_channel1 !== 20)begin
+					
+					  if(adjust_finish_cnt < 100)begin
+							if((adc1_read_data > high_temp)&&((adc1_read_data - high_temp)<2000))begin//读取信号幅值
+								high_temp <= adc1_read_data;
+							end
+							if(adjust_cnt < 1250-1)begin
+								
+							end
+							else begin
+								if(((high_temp - BASIC_LINE))*2 > HIGH_LIMIT)begin//信号太大
+									high_temp <= 7900;
+								end
+								if(((high_temp - BASIC_LINE)*2 < LOW_LIMIT)&&(((high_temp - BASIC_LINE)*2) > 40))begin//信号太小
+									high_temp <= 7900;
+								end
+							end
+					  end
+				
+				end	  
+				else begin
+				end
+			end
+			else begin	
+			end
+				
+
+		end
+		else if(stop_cmd_en)begin
+			high_temp <= 7890;
+		end
+	end
+end
+
+			
+//ADC_fifo写操作
+always @(posedge clk or negedge rst_n) begin         
+    if (!rst_n) begin
+		 cali_cnt <= 0;
+		 gain_laser_cnt <= 0;
+
+    end                                                      
+    else begin 
+		  if(start_cmd_en == 1) begin
+		  gain_laser_cnt <= 0;
+		  cali_cnt <= 0;
+			  if(adc1_en_flag == 1)begin
+					send_pkg[ain_4bit_data*2+0] <= adc1_read_data[7:0];
+					send_pkg[ain_4bit_data*2+1] <= adc1_read_data[15:8];
+			  end
+			  else begin
+			  end
+
+		  end
+        else if(cali_cmd_en == 1)begin
+			   if(channel_count==0)begin
+				  gain_laser_cnt <= 6'd3;
+			   end
+
+			   if(adc1_en_flag == 1)begin
+					if(cali_cnt == 6'd3)begin
+						cali_cnt <= 0;
+						if(gain_laser_cnt == 6'd3)begin
+							gain_laser_cnt <= 0;
+						end
+						else begin
+							gain_laser_cnt <= gain_laser_cnt + 1'd1;
+						end
+					end
+					else begin
+						cali_cnt <= cali_cnt + 1'd1;
+					end
+						send_pkg[ain_4bit_data] <= gain_data_temp[2+4*ain_4bit_data -:3];//
+						//send_pkg[ain_4bit_data+8] <= gain_data_temp[gain_laser_cnt][2+4*(ain_4bit_data+8) -:3];//
+						//send_pkg[ain_4bit_data+16] <= gain_data_temp[gain_laser_cnt][2+4*(ain_4bit_data+16) -:3];//
+						//send_pkg[ain_4bit_data+24] <= gain_data_temp[gain_laser_cnt][2+4*(ain_4bit_data+24) -:3];//
+			  end
+			  else begin
+			  end
+	
+		  end
+		  else if(stop_cmd_en || stop_cali_cmd_en)begin
+				gain_laser_cnt <= 0;
+				cali_cnt <= 0;
+		  end
+
+	 end
+end
+
+//校准操作
+always @(posedge clk or negedge rst_n) begin
+	if (!rst_n) begin
+		 gain_data_temp <= 4'h1;
+
+	end
+	else begin
+		if(cali_cmd_en == 1)begin
+			if(adc1_en_flag)begin
+					if(cali_channel1 !== 20)begin
+						if(adjust_finish_cnt < 100)begin
+							if(adjust_cnt < 1250-1)begin
+								adjust_cnt <= adjust_cnt + 1;
+							end
+							else begin
+								adjust_cnt <= 0;
+										
+								if(((high_temp - BASIC_LINE))*2 > HIGH_LIMIT)begin//信号太大
+									if(gain_data_temp[2+4*ain_4bit_data -:3] == 3'b001)begin
+										gain_data_temp[2+4*ain_4bit_data -:3] <= 3'b001;
+										
+									end
+									else if((gain_data_temp[4*ain_4bit_data] == 1) && (gain_data_temp[2+4*ain_4bit_data -:3] !== 3'b001))begin
+										gain_data_temp[2+4*ain_4bit_data -:2] <= gain_data_temp[2+4*ain_4bit_data -:2] - 1;
+										
+									end
+									else if(gain_data_temp[2+4*ain_4bit_data -:3] == 3'b000)begin
+										gain_data_temp[2+4*ain_4bit_data -:3] <= 3'b111;
+									end
+									else if((gain_data_temp[4*ain_4bit_data] == 0) && (gain_data_temp[2+4*ain_4bit_data -:3] !== 3'b000))begin
+										gain_data_temp[2+4*ain_4bit_data -:2] <= gain_data_temp[2+4*ain_4bit_data -:2] - 1;
+									end
+										adjust_cnt <= 0;
+										adjust_finish_cnt <= 0;
+								end
+								else if((high_temp - BASIC_LINE)*2 < LOW_LIMIT && (high_temp - BASIC_LINE)*2 > 100)begin
+									if(gain_data_temp[2+4*ain_4bit_data -:3] == 3'b110)begin
+										gain_data_temp[2+4*ain_4bit_data -:3] <= gain_data_temp[2+4*ain_4bit_data -:3];
+									end
+									else if((gain_data_temp[4*ain_4bit_data] == 0)&&(gain_data_temp[2+4*ain_4bit_data -:3] !== 3'b110))begin
+										gain_data_temp[2+4*ain_4bit_data -:2] <= gain_data_temp[2+4*ain_4bit_data -:2] + 1;
+									end
+									else if(gain_data_temp[2+4*ain_4bit_data -:3] == 3'b111)begin
+										gain_data_temp[2+4*ain_4bit_data -:3] <= 3'b000;
+									end
+									else if((gain_data_temp[4*ain_4bit_data] == 1)&&(gain_data_temp[2+4*ain_4bit_data -:3] !== 3'b111))begin
+										gain_data_temp[2+4*ain_4bit_data -:2] <= gain_data_temp[2+4*ain_4bit_data -:2] + 1;
+									end
+										adjust_cnt <= 0;
+										adjust_finish_cnt <= 0;
+								end
+								else if(((high_temp - BASIC_LINE)*2 > LOW_LIMIT)&&((high_temp - BASIC_LINE)*2 < HIGH_LIMIT))begin
+									adjust_finish_cnt <= adjust_finish_cnt + 1;
+									gain_data_temp[2+4*ain_4bit_data -:3] <= gain_data_temp[2+4*ain_4bit_data -:3];
+								end
+							end
+							
+						end
+
+					end
+			end
+			else begin
+			end
+
+
+		end
+		else if(stop_cmd_en == 1)begin
+			gain_data_temp <= 4'h1;
+			adjust_cnt <= 0;
+			adjust_finish_cnt <= 0;
+		end
+
+	end
+end
+
+//数据包更新
+always @(posedge clk_100m or negedge clk_rst_n) begin  
+	 if (!clk_rst_n) begin
+		  send_pkg_start_f1 <= 1;
+		  send_pkg_start_f2 <= 1;
+		  send_data_start_f1 <= 1;
+		  send_data_start_f2 <= 1;
+		  send_pkg_head <= 0;
+		  daq_pkg_data_cnt <= 0;
+		  test_cnt <= 0;
+		  laser_channel_temp <= 0;
+		  send_pack_finish <= 0;
+		  send_check_finish <= 0;
+		  send_head_flag <= 0;
+		  send_check_flag <= 0;
+		  cali_send_pack_finish <= 0;
+		  stop_cali_cmd_en <= 0;
+	 end
+	 else begin	
+	     if(channel_count==0)begin
+				send_pkg_start_f1 <= 1;
+				test_cnt <= 0;
+		  end
+		  else begin
+		      send_pkg_start_f1 <= 0;
+		  end
+		  send_pkg_start_f2 <= send_pkg_start_f1;         //数据包头发送判定
+		  
+		  if(ain_temp_data2==0 )begin
+				send_data_start_f1 <= 1;
+		  end
+		  else begin
+		      send_data_start_f1 <= 0;
+		  end
+		  send_data_start_f2 <= send_data_start_f1;          //数据中的AD数据发送判定
+		  
+		  if(send_pkg_start_f && start_cmd_en)begin
+				if(laser_channel_temp < laser_channel_data-1)begin
+					laser_channel_temp <= laser_channel_temp + 1;
+				end
+				else begin
+					laser_channel_temp <= 0;
+				end
+		  end
+		  else if(send_pkg_start_f && cali_cmd_en)begin
+				if(laser_channel_temp < laser_channel_data-1)begin
+					laser_channel_temp <= laser_channel_temp + 1;
+				end
+				else begin
+					laser_channel_temp <= 0;
+				end
+		  end
+		  else begin
+				laser_channel_temp <= laser_channel_temp;
+		  end
+		  
+		  if(stop_cmd_en || stop_cali_cmd_en)begin
+				laser_channel_temp <= 0;
+				test_cnt <= 0;
+//				send_pkg_start_f1 <= 1;
+//		  		send_pkg_start_f2 <= 1;
+//		  		send_data_start_f1 <= 1;
+//		  		send_data_start_f2 <= 1;
+		  		send_pkg_head <= 0;
+		  		send_pack_finish <= 0;
+		  		send_check_finish <= 0;
+		  		send_head_flag <= 0;
+		  		send_check_flag <= 0;
+		  		cali_send_pack_finish <= 0;
+		  end
+		if(start_cmd_en)begin
+	     if(send_pkg_start_f && send_pack_finish == 0 && start_cmd_en)begin
+//		      if(stop_delay_flag)begin
+//					send_pkg_data[0] <= 8'h1a;
+//					send_pkg_data[1] <= 8'h0a;
+//					daq_pkg_data_cnt <= 2;
+//				end
+//				else begin
+						send_pkg_data[0] <= 8'h1a;
+						send_pkg_data[1] <= 8'h0a;
+						send_pkg_data[2] <= 8'h3a;
+						send_pkg_data[3] <= (datapkg_length + 1) & 16'h00_ff;
+						send_pkg_data[4] <= (datapkg_length + 1)>>8 & 16'h00_ff;
+						send_pkg_data[5] <= (datapkg_length + 1)>>16 & 16'h00_ff;
+						send_pkg_data[6] <= (datapkg_length + 1)>>24 & 16'h00_ff;
+						send_pkg_data[7] <= 8'h02;//数据
+						send_pkg_data[8] <= 8'h00;//采集数据
+						send_pkg_data[9] <= laser_channel_temp;//光源序号
+						send_pkg_data[10] <= channel_count_pkg & 16'h00_ff;//每通道数据点数
+						send_pkg_data[11] <= channel_count_pkg >> 8 & 16'h00_ff;
+						daq_pkg_data_cnt <= 12;
+//				end     	      
+               send_head_flag <= 1;						
+		  end
+		  else if( send_head_flag==0 && send_check_finish==0 && send_pack_finish == 0 && start_cmd_en && send_data_start_f)begin		
+
+				send_pkg_data[0] <= send_pkg[0];
+				send_pkg_data[1] <= send_pkg[1];
+				send_pkg_data[2] <= send_pkg[2];
+				send_pkg_data[3] <= send_pkg[3];
+				send_pkg_data[4] <= send_pkg[4];
+				send_pkg_data[5] <= send_pkg[5];
+				send_pkg_data[6] <= send_pkg[6];
+				send_pkg_data[7] <= send_pkg[7];
+				send_pkg_data[8] <= send_pkg[8];
+				send_pkg_data[9] <= send_pkg[9];
+				send_pkg_data[10] <= send_pkg[10];
+				send_pkg_data[11] <= send_pkg[11];
+				send_pkg_data[12] <= send_pkg[12];
+				send_pkg_data[13] <= send_pkg[13];
+				send_pkg_data[14] <= send_pkg[14];
+				send_pkg_data[15] <= send_pkg[15];
+				send_pkg_data[16] <= send_pkg[16];
+				send_pkg_data[17] <= send_pkg[17];
+				send_pkg_data[18] <= send_pkg[18];
+				send_pkg_data[19] <= send_pkg[19];
+				send_pkg_data[20] <= send_pkg[20];
+				send_pkg_data[21] <= send_pkg[21];
+				send_pkg_data[22] <= send_pkg[22];
+				send_pkg_data[23] <= send_pkg[23];
+				send_pkg_data[24] <= send_pkg[24];
+				send_pkg_data[25] <= send_pkg[25];
+				send_pkg_data[26] <= send_pkg[26];
+				send_pkg_data[27] <= send_pkg[27];
+				send_pkg_data[28] <= send_pkg[28];
+				send_pkg_data[29] <= send_pkg[29];
+				send_pkg_data[30] <= send_pkg[30];
+				send_pkg_data[31] <= send_pkg[31];
+				send_pkg_data[32] <= send_pkg[32];
+				send_pkg_data[33] <= send_pkg[33];
+				send_pkg_data[34] <= send_pkg[34];
+				send_pkg_data[35] <= send_pkg[35];
+				send_pkg_data[36] <= send_pkg[36];
+				send_pkg_data[37] <= send_pkg[37];
+				send_pkg_data[38] <= send_pkg[38];
+				send_pkg_data[39] <= send_pkg[39];
+				send_pkg_data[40] <= send_pkg[40];
+				send_pkg_data[41] <= send_pkg[41];
+				send_pkg_data[42] <= send_pkg[42];
+				send_pkg_data[43] <= send_pkg[43];
+				send_pkg_data[44] <= send_pkg[44];
+				send_pkg_data[45] <= send_pkg[45];
+				send_pkg_data[46] <= send_pkg[46];
+				send_pkg_data[47] <= send_pkg[47];
+				send_pkg_data[48] <= send_pkg[48];
+				send_pkg_data[49] <= send_pkg[49];
+				send_pkg_data[50] <= send_pkg[50];
+				send_pkg_data[51] <= send_pkg[51];
+				send_pkg_data[52] <= send_pkg[52];
+				send_pkg_data[53] <= send_pkg[53];
+				send_pkg_data[54] <= send_pkg[54];
+				send_pkg_data[55] <= send_pkg[55];
+				send_pkg_data[56] <= send_pkg[56];
+				send_pkg_data[57] <= send_pkg[57];
+				send_pkg_data[58] <= send_pkg[58];
+				send_pkg_data[59] <= send_pkg[59];
+				send_pkg_data[60] <= send_pkg[60];
+				send_pkg_data[61] <= send_pkg[61];
+				send_pkg_data[62] <= send_pkg[62];
+				send_pkg_data[63] <= send_pkg[63];
+				send_pkg_data[64] <= send_pkg[64];
+				send_pkg_data[65] <= send_pkg[65];
+				send_pkg_data[66] <= send_pkg[66];
+				send_pkg_data[67] <= send_pkg[67];
+				send_pkg_data[68] <= send_pkg[68];
+				send_pkg_data[69] <= send_pkg[69];	
+				daq_pkg_data_cnt <= sampling_channel_data*2;
+		      	send_check_flag <= 1;
+
+			//	send_pkg_head <= 0;
+//			if(test_cnt < 1)begin
+//				daq_pkg_data_cnt <= 0;
+//			end
+//			if(test_cnt > ((channel_samp_frequency/laser_channel_data/sampling_frequency_data) - trash_pkg))begin
+//				daq_pkg_data_cnt <= 0;
+//			end
+		  end
+			if(send_check_finish == 1)begin
+				send_check_data <= 0;
+				send_check_finish <= 0;
+				send_pack_finish <= 1;
+				cali_send_pack_finish <= 1;
+		  	end
+		  
+		  	if(fifo_cnt == daq_pkg_data_cnt) begin
+				send_pack_finish <= 0;
+				cali_send_pack_finish <= 0;
+			end
+		end
+		 if(check_cmd_en || check_cmd_refresh)begin
+		  if(check_cmd_refresh && !send_pack_finish)begin
+				send_pkg_data[0] <= 8'h3a;                //包头
+				send_pkg_data[1] <= 8'h10;                //长度16
+				send_pkg_data[2] <= 8'h00;                //
+				send_pkg_data[3] <= 8'h00;                //
+				send_pkg_data[4] <= 8'h00;                //
+				send_pkg_data[5] <= 8'h00;                //功能码
+				send_pkg_data[6] <= 8'h00;						//子功能码
+				send_pkg_data[7] <= 8'h01;                //版本号字节01
+				send_pkg_data[8] <= 8'h00;                //版本号字节02
+				send_pkg_data[9] <= 8'h00;                //版本号字节03
+				send_pkg_data[10] <= 8'h00;                //版本号字节04
+				send_pkg_data[11] <= laser_channel_data;                //光源数量
+				send_pkg_data[12] <= sampling_channel_data;                //探测器数量
+				send_pkg_data[13] <= sampling_frequency_data & 16'h00_ff;                //光源采样率浮点数据            
+				send_pkg_data[14] <= sampling_frequency_data>>8 & 16'h00_ff;               //光源采样率浮点数据  
+				send_pkg_data[15] <= sampling_frequency_data>>16 & 16'h00_ff;             //光源采样率浮点数据  
+				send_pkg_data[16] <= sampling_frequency_data>>24 & 16'h00_ff;             //光源采样率浮点数据  
+			
+            	send_pkg_data[17] <= channel_samp_frequency & 16'h00_ff;
+				send_pkg_data[18] <= channel_samp_frequency>>8 & 16'h00_ff;
+				send_pkg_data[19] <= channel_samp_frequency>>16 & 16'h00_ff;
+				send_pkg_data[20] <= channel_samp_frequency>>24 & 16'h00_ff;	
+
+				send_pkg_data[21] <= 8'h00;               //校验
+				send_pkg_data[22] <= 8'h0a;               //包尾
+				daq_pkg_data_cnt <= 8'h17;                //长度16 +7			
+				check_cmd_en <= 1;
+		  end
+		  else if(check_cmd_en && !send_pack_finish && !check_send_pack_finish)begin
+				check_send_pack_finish <= 1;
+		  end
+		  else if(fifo_cnt == daq_pkg_data_cnt)begin
+				check_send_pack_finish <= 0;
+				check_cmd_en <= 0;
+		  end
+		  end
+			
+		 if(cali_cmd_en)begin
+		  if(send_pkg_start_f && cali_cmd_en && cali_send_pack_finish==0)begin
+//				if(cali_cmd_refresh)begin
+//					send_pkg_data[0] <= 8'h00;
+//					send_pkg_data[1] <= 8'h00;
+//					send_pkg_data[2] <= 8'h0a;
+//					daq_pkg_data_cnt <= 3;
+//				end
+//				else begin
+						send_pkg_data[0] <= 8'h00;
+						send_pkg_data[1] <= 8'h0a;
+						send_pkg_data[2] <= 8'h3a;
+						send_pkg_data[3] <= (calipkg_length + 3) & 16'h00_ff;
+						send_pkg_data[4] <= (calipkg_length + 3)>>8 & 16'h00_ff;
+						send_pkg_data[5] <= 8'h00;
+						send_pkg_data[6] <= 8'h00;
+						send_pkg_data[7] <= 8'h01;
+						send_pkg_data[8] <= 8'h00;
+						send_pkg_data[9] <= cali_state;//校准状态
+						daq_pkg_data_cnt <= 10;
+//				end
+						send_head_flag <= 1;
+		  end
+		  else if(cali_cmd_en && send_data_start_f && !send_head_flag && !send_check_finish && cali_send_pack_finish==0 && (test_cnt < 5))begin		
+				test_cnt <= test_cnt + 1;
+				if(test_cnt >0)begin
+				send_pkg_data[0] <= send_pkg[0];
+				send_pkg_data[1] <= send_pkg[1];
+				send_pkg_data[2] <= send_pkg[2];
+				send_pkg_data[3] <= send_pkg[3];
+				send_pkg_data[4] <= send_pkg[4];
+				send_pkg_data[5] <= send_pkg[5];
+				send_pkg_data[6] <= send_pkg[6];
+				send_pkg_data[7] <= send_pkg[7];
+				send_pkg_data[8] <= send_pkg[8];
+				send_pkg_data[9] <= send_pkg[9];
+				send_pkg_data[10] <= send_pkg[10];
+				send_pkg_data[11] <= send_pkg[11];
+				send_pkg_data[12] <= send_pkg[12];
+				send_pkg_data[13] <= send_pkg[13];
+				send_pkg_data[14] <= send_pkg[14];
+				send_pkg_data[15] <= send_pkg[15];
+				send_pkg_data[16] <= send_pkg[16];
+				send_pkg_data[17] <= send_pkg[17];
+				send_pkg_data[18] <= send_pkg[18];
+				send_pkg_data[19] <= send_pkg[19];
+				send_pkg_data[20] <= send_pkg[20];
+				send_pkg_data[21] <= send_pkg[21];
+				send_pkg_data[22] <= send_pkg[22];
+				send_pkg_data[23] <= send_pkg[23];
+				send_pkg_data[24] <= send_pkg[24];
+				send_pkg_data[25] <= send_pkg[25];
+				send_pkg_data[26] <= send_pkg[26];
+				send_pkg_data[27] <= send_pkg[27];
+				send_pkg_data[28] <= send_pkg[28];
+				send_pkg_data[29] <= send_pkg[29];
+				send_pkg_data[30] <= send_pkg[30];
+				send_pkg_data[31] <= send_pkg[31];
+				send_pkg_data[32] <= send_pkg[32];
+				send_check_flag <= 1;
+				daq_pkg_data_cnt <= sampling_channel_data;
+				end
+		  end
+			if(send_check_finish == 1)begin
+				send_check_data <= 0;
+				send_check_finish <= 0;
+				send_pack_finish <= 1;
+				cali_send_pack_finish <= 1;
+		  	end
+		  
+		  	if(fifo_cnt == daq_pkg_data_cnt) begin
+				send_pack_finish <= 0;
+				cali_send_pack_finish <= 0;
+			end
+				
+		  end
+//		 if(stop_cali_cmd_en)begin
+//		  if(send_pkg_start_f && stop_cali_cmd_en && cali_send_pack_finish==0)begin
+//						send_pkg_data[0] <= 8'h00;
+//						send_pkg_data[1] <= 8'h0a;
+//						send_pkg_data[2] <= 8'h3a;
+//						send_pkg_data[3] <= (calipkg_length + 3) & 16'h00_ff;
+//						send_pkg_data[4] <= (calipkg_length + 3)>>8 & 16'h00_ff;
+//						send_pkg_data[5] <= 8'h00;
+//						send_pkg_data[6] <= 8'h00;
+//						send_pkg_data[7] <= 8'h01;
+//						send_pkg_data[8] <= 8'h00;
+//						send_pkg_data[9] <= cali_state;//校准状态
+//						daq_pkg_data_cnt <= 10;
+//						send_head_flag <= 1;		
+//		  end
+//		  else if(stop_cali_cmd_en && send_data_start_f && !send_head_flag && !send_check_finish && cali_send_pack_finish==0 && (test_cnt < 17))begin		
+//				test_cnt <= test_cnt + 1;
+//				if(test_cnt >0)begin
+//				send_pkg_data[0] <= send_pkg[0];
+//				send_pkg_data[1] <= send_pkg[1];
+//				send_pkg_data[2] <= send_pkg[2];
+//				send_pkg_data[3] <= send_pkg[3];
+//				send_pkg_data[4] <= send_pkg[4];
+//				send_pkg_data[5] <= send_pkg[5];
+//				send_pkg_data[6] <= send_pkg[6];
+//				send_pkg_data[7] <= send_pkg[7];
+//				send_pkg_data[8] <= send_pkg[8];
+//				send_pkg_data[9] <= send_pkg[9];
+//				send_pkg_data[10] <= send_pkg[10];
+//				send_pkg_data[11] <= send_pkg[11];
+//				send_pkg_data[12] <= send_pkg[12];
+//				send_pkg_data[13] <= send_pkg[13];
+//				send_pkg_data[14] <= send_pkg[14];
+//				send_pkg_data[15] <= send_pkg[15];
+//				send_check_flag <= 1;
+//				daq_pkg_data_cnt <= sampling_channel_data;
+//				end
+//		  end
+//			if(send_check_finish == 1)begin
+//				send_check_data <= 0;
+//				send_check_finish <= 0;
+//				send_pack_finish <= 1;
+//				cali_send_pack_finish <= 1;
+//		  	end
+//		  
+//		  	if(fifo_cnt == daq_pkg_data_cnt) begin
+//				send_pack_finish <= 0;
+//				cali_send_pack_finish <= 0;
+//			end
+//				
+//		  end
+			if(stop_cali_delay_flag||stop_cali_cmd_en)begin
+			if(stop_cali_delay_flag && !send_pack_finish)begin
+						send_pkg_data[0] <= 8'h3a;
+						send_pkg_data[1] <= 8'h03;
+						send_pkg_data[2] <= 8'h00;//包头
+						send_pkg_data[3] <= 8'h00;
+						send_pkg_data[4] <= 8'h00;
+						send_pkg_data[5] <= 8'h01;
+						send_pkg_data[6] <= 8'h00;
+						send_pkg_data[7] <= 8'h02;//校准停止状态
+						send_pkg_data[8] <= 8'h00;
+						send_pkg_data[9] <= 8'h0a;
+						daq_pkg_data_cnt <= 10;
+						stop_cali_cmd_en <= 1;						
+		  end
+		  else if(stop_cali_cmd_en && !send_pack_finish && !check_send_pack_finish)begin
+				check_send_pack_finish <= 1;
+		  end
+		  else if(fifo_cnt == daq_pkg_data_cnt)begin
+				check_send_pack_finish <= 0;
+				stop_cali_cmd_en <= 0;
+		  end
+		  	end
+			if(send_check_flag == 1|| send_head_flag == 1)begin
+				if(send_check_cnt == 8'd68)begin
+					send_check_data <= ~send_check_data + 1;
+					send_check_cnt <= 0;
+					send_check_flag <= 0;
+					send_head_flag <= 0;
+					send_check_finish <= 1;
+				end
+				else begin
+					send_check_data <= send_check_data + send_pkg_data[send_check_cnt];
+					send_check_cnt <= send_check_cnt + 1;
+				end
+		  end
+		  else begin
+				send_check_cnt <= 1;
+		  end
+		  
+		 /* if(send_check_finish == 1)begin
+				
+				send_check_data <= 0;
+				send_check_finish <= 0;
+				send_pack_finish <= 1;
+				cali_send_pack_finish <= 1;
+				
+		  end
+		  
+		  if(fifo_cnt == daq_pkg_data_cnt) begin
+				send_pack_finish <= 0;
+				cali_send_pack_finish <= 0;
+//				if(stop_cali_cmd_en)begin
+//					cali_send_pack_finish <= 1;
+//				end
+			end
+			else begin
+				
+			end
+*/		  
+	 end
+end
+
+//写入到ft232_send_fifo
+always @(posedge clk_100m or negedge clk_rst_n) begin         
+    if (!clk_rst_n) begin
+       	fifo_cnt <= 0;
+		ft232_wrreq <= 0;
+    end                                                      
+    else begin                                               
+        if(send_pack_finish||check_send_pack_finish||cali_send_pack_finish) begin //发送AD采集的数据包
+			 if(wrusedw_cnt<4000 && fifo_cnt < daq_pkg_data_cnt)begin
+			// if(fifo_cnt < daq_pkg_data_cnt)begin   
+				 ft232_wrreq <= 1;
+				 ft232_data_in <= send_pkg_data[fifo_cnt];
+				 fifo_cnt <= fifo_cnt + 1;
+			 end
+			 else begin
+				 ft232_wrreq <= 0;
+			 end
+		end
+		else begin
+			 fifo_cnt <= 0;
+			 ft232_wrreq <= 0;
+		end
+    end
+end
+
+//例化ft232发送
+ft232hq_send u_ft232hq_send(
+	.clock				(ft232_clk),
+	.rst_n				(rst_n),
+	
+	.rd_n				(ft232_rd_n),
+	.txe_n				(ft232_txe_n),
+	.wr_n				(ft232_wr_n),
+	.data_send		(ft232_data_send),
+	.ft232_siwu_n	(ft232_siwu_n),
+	.fifo_data_out	(ft232_data_out),
+	.fifo_rdusedw	(rdusedw_cnt),
+	.fifo_rd_en		(ft232_rdreq)
+);
+
+//例化fifo
+	ft232hq_send_fifo u_ft232_send_fifo(
+	.Data				(ft232_data_in), //input [7:0] Data
+	.WrClk				(clk_100m), //input WrClk
+	.RdClk				(ft232_clk), //input RdClk
+	.WrEn				(ft232_wrreq), //input WrEn
+	.RdEn				(ft232_rdreq), //input RdEn
+	.Wnum				(wrusedw_cnt), //output [12:0] Wnum
+	.Rnum				(rdusedw_cnt), //output [12:0] Rnum
+	.Q						(ft232_data_out) //output [7:0] Q
+);
+
+ads8406 u_adc1_ads8406(
+	.clk					(clk),
+	.clk_2m			(clk_2m),
+	.rst_n				(rst_n),
+	.adc_data			(adc1_data),
+	.adc_en			(adc_en),
+	.adc_rd				(adc1_rd),
+	.adc_convst		(adc1_convst),
+	.adc_reset		(adc1_reset),
+
+	.channel_samp_frequency		(channel_samp_frequency),
+	.sampling_channel_data			(sampling_channel_data),
+	.data				(adc1_read_data),
+	.finish_flag		(adc1_read_flag),
+	.test					(test)
+);
+
+ads8406 u_adc2_ads8406(
+	.clk					(clk),
+	.clk_2m			(clk_2m),
+	.rst_n				(rst_n),
+	.adc_data			(adc2_data),
+	.adc_en			(adc_en),
+	.adc_rd				(adc2_rd),
+	.adc_convst		(adc2_convst),
+	.adc_reset		(adc2_reset),
+
+	.channel_samp_frequency		(channel_samp_frequency),
+	.sampling_channel_data			(sampling_channel_data),
+	.data				(adc2_read_data),
+	.finish_flag		(adc2_read_flag)
+);
+
+ads8406 u_adc3_ads8406(
+	.clk					(clk),
+	.clk_2m			(clk_2m),
+	.rst_n				(rst_n),
+	.adc_data			(adc3_data),
+	.adc_en			(adc_en),
+	.adc_rd				(adc3_rd),
+	.adc_convst		(adc3_convst),
+	.adc_reset		(adc3_reset),
+
+	.channel_samp_frequency		(channel_samp_frequency),
+	.sampling_channel_data			(sampling_channel_data),
+	.data				(adc3_read_data),
+	.finish_flag		(adc3_read_flag)
+);
+
+ads8406 u_adc4_ads8406(
+	.clk					(clk),
+	.clk_2m			(clk_2m),
+	.rst_n				(rst_n),
+	.adc_data			(adc4_data),
+	.adc_en			(adc_en),
+	.adc_rd				(adc4_rd),
+	.adc_convst		(adc4_convst),
+	.adc_reset		(adc4_reset),
+
+	.channel_samp_frequency		(channel_samp_frequency),
+	.sampling_channel_data			(sampling_channel_data),
+	.data				(adc4_read_data),
+	.finish_flag		(adc4_read_flag)
+);
+
+//例化gain
+hc595d_drive gain_hc595d_drive(
+	.clk							(clk),
+	.rst_n						(rst_n),
+	
+	.hc595d_data			(gain_data),
+	.hc595d_data_len		(gain_data_len),
+	.hc595d_wr_en			(gain_wr_en),
+	
+	.hc595d_rck				(gain_rck),
+	.hc595d_scl				(gain_scl),
+	.hc595d_sck				(gain_sck),
+	.hc595d_ser				(gain_ser),
+	.hc595d_wr_finish	(gain_wr_finish)
+);
+
+//例化ain
+hc595d_drive ain_hc595d_drive(
+	.clk							(clk),
+	.rst_n						(rst_n),
+	
+	.hc595d_data			(ain_data),
+	.hc595d_data_len		(ain_data_len),
+	.hc595d_wr_en			(ain_wr_en),
+	
+	.hc595d_rck				(ain_rck),
+	.hc595d_scl				(ain_scl),
+	.hc595d_sck				(ain_sck),
+	.hc595d_ser				(ain_ser),
+	.hc595d_wr_finish	(ain_wr_finish)
+);
+
+hc595pw_drive laser_hc595pw_drive(
+	.clk							(clk),
+	.rst_n						(rst_n),
+	
+	.hc595d_data			(laser_wr_data),
+	.hc595d_data_len		(laser_data_len),
+	.hc595d_wr_en			(laser_wr_en),
+	
+	.hc595d_rck				(laser_rck),
+	.hc595d_scl				(laser_scl),
+	.hc595d_sck				(laser_sck),
+	.hc595d_ser				(laser_ser),
+	.hc595d_wr_finish	(laser_wr_finish)
+);
+
+//例化WL1
+ad9833 ad9833_wl1(
+	.clk							(clk),
+	.rst_n						(rst_n),
+	
+	.ad9833_data			(wl1_data),
+	.ad9833_wr_en		(wl1_wr_en),
+	.ad9833_fsync			(wl1_fsync),
+	.ad9833_sclk			(wl1_sclk),
+	.ad9833_sdata			(wl1_sdata),
+	.ad9833_wr_finish	(wl1_wr_finish)
+);
+
+//例化WL2
+ad9833 ad9833_wl2(
+	.clk							(clk),
+	.rst_n						(rst_n),
+	
+	.ad9833_data			(wl2_data),
+	.ad9833_wr_en		(wl2_wr_en),
+	.ad9833_fsync			(wl2_fsync),
+	.ad9833_sclk			(wl2_sclk),
+	.ad9833_sdata			(wl2_sdata),
+	.ad9833_wr_finish	(wl2_wr_finish)
+);
+
+endmodule
