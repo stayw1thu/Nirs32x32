@@ -726,7 +726,7 @@ always @(posedge clk or negedge rst_n) begin
 		if(start_cmd_en == 1)begin
 			case(laser_state)
 			4'h0:begin
-				if(irq_count == samp_count_num -5)begin
+				if(irq_count == samp_count_num -4)begin
 					irq_count <= 25'h0;
 					laser_state <= 4'h1;
 					if (laser_data[data_cnt] == 8'h88) begin//初始化
@@ -782,7 +782,7 @@ always @(posedge clk or negedge rst_n) begin
 			if(cali_state != 1)begin
 				case(laser_state)
 				4'h0:begin
-					if(irq_count == samp_count_num -5)begin
+					if(irq_count == samp_count_num -4)begin
 						irq_count <= 25'h0;
 						laser_state <= 4'h1;
 						if (laser_data[data_cnt] == 4'h8) begin//初始化
